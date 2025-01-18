@@ -50,7 +50,7 @@ def draw(screen, generation, alive_count, highest_score):
 
     # Render text for Highest scores
     highest_scores = font.render(f"Highest_Score: {highest_score}", True, (0, 0, 0))
-    screen.blit(highest_scores, (WIDTH - 200, 40))
+    screen.blit(highest_scores, (WIDTH - 250, 40))
 
 
 # Calculate distance between dino and top of pipe
@@ -208,7 +208,7 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
                     gen[i].fitness += 5  # Reward for clearing pipe
 
                 output = nets[i].activate(
-                    (dino.rect.y, distance((dino.rect.x, dino.rect.y), obs.rect.midtop))
+                    (dino.rect.y, distance((dino.rect.x, dino.rect.y), obs.rect.midtop),game_speed)
                 )
 
 
@@ -223,7 +223,7 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
 
                 
             output = Dino_winner.activate(
-                (dino.rect.y, distance((dino.rect.x, dino.rect.y), obstacles[0].rect.midtop))
+                (dino.rect.y, distance((dino.rect.x, dino.rect.y), obstacles[0].rect.midtop),game_speed)
             )
             if output[0] > 0.5 and dino.rect.y >= HEIGHT - player_height:
                 dino.jump(HEIGHT)
@@ -270,7 +270,7 @@ def run_winner(config_file):
         config_file,
     )
 
-    with open("Dino_winner.pkl", "rb") as f:
+    with open(os.path.join(os.path.dirname(__file__),"winners/Dino_winner.pkl"), "rb") as f:
         winner = pickle.load(f)
 
     Dino_winner = neat.nn.FeedForwardNetwork.create(winner, config)
