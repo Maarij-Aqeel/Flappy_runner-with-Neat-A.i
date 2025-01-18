@@ -57,7 +57,7 @@ def score(screen,scores,game_speed,highest_scr):
     FONT = pygame.font.SysFont("comicsans", 30)
 
     scores += 1
-    if scores % 100 == 0 and game_speed<14.0:  # Increase Game speed every 100 points
+    if scores % 100 == 0 and game_speed<14.3:  # Increase Game speed every 100 points
         game_speed += 0.1
 
     if scores > highest_scr:
