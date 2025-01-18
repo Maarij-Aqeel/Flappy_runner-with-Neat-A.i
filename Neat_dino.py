@@ -163,7 +163,7 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
 
     while running:
         screen.fill((135, 206, 250))
-        clock.tick(120)
+        clock.tick(60)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -312,5 +312,3 @@ if __name__ == "__main__":
     config_file = os.path.join(os.path.dirname(__file__), "config_file.txt")
     main_menu(WIDTH,config_file,background_image_path,screen,player_img,ground_img)
 
-
-    # run_winner(config_file)
