@@ -33,6 +33,7 @@ obstacle_img = pygame.transform.scale(
     (30, 200),
 )
 ground_img=pygame.transform.scale(pygame.image.load(os.path.join(os.path.dirname(__file__),'assets/ground.png')),(1100,HEIGHT-500))
+background_image_path=pygame.transform.smoothscale((pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/bg.png")).convert()),(WIDTH,HEIGHT))
 
 
 # Function for Displaying generations, Dinos alive  etc 
@@ -60,6 +61,86 @@ def distance(pos_one, pos_two):
     dx = dx**2
     dy = dy**2
     return math.sqrt(dx + dy)
+
+# Main Menu of game
+def main_menu(Screen_Width,scongig_file, background_image, Screen,dino,ground):
+
+
+    button_width = 200
+    button_height = 50
+    button_color = (255, 22, 15) 
+    button_hover_color = (254, 147, 36)
+    small_font = pygame.font.Font(None, 24)
+
+    while True:
+        Screen.blit(background_image, (0, 0))
+        Screen.blit(dino,((WIDTH/2)-20,HEIGHT/4))
+        Screen.blit(ground,(0,HEIGHT-100))
+        
+
+        Test_ai_rect = pygame.Rect((Screen_Width/2)-100, 220, button_width, button_height)
+        Test_ai = small_font.render("Test A.i", True, (255, 255, 255))
+        Test_ai_text = Test_ai.get_rect(center=Test_ai_rect.center)
+
+        compete_ai_rect = pygame.Rect((Screen_Width/2)-100, 290, button_width, button_height)
+        compete_ai = small_font.render("Compete with A.i", True, (255, 255, 255))
+        compete_ai_text = compete_ai.get_rect(center=compete_ai_rect.center)
+        
+        Train_ai_rect = pygame.Rect((Screen_Width/2)-100, 360, button_width, button_height)
+        Train_ai_sur = small_font.render("Train A.i", True, (255, 255, 255))
+        Train_ai_text = Train_ai_sur.get_rect(center=Train_ai_rect.center)
+
+        Play_alone_rect = pygame.Rect((Screen_Width/2)-100, 430, button_width, button_height)
+        Play_alone_sur = small_font.render("Play yourself", True, (255, 255, 255))
+        Play_alone_text = Play_alone_sur.get_rect(center=Play_alone_rect.center)
+
+        quit_button_rect = pygame.Rect((Screen_Width/2)-100, 500, button_width, button_height)
+        quit_text = small_font.render("Quit Game", True, (255, 255, 255))
+        quit_text_rect = quit_text.get_rect(center=quit_button_rect.center)
+
+        mouse_pos = pygame.mouse.get_pos()
+        for button_rect, button_text_rect in [
+            (compete_ai_rect, compete_ai_text),
+            (Train_ai_rect, Train_ai_text),
+            (Play_alone_rect, Play_alone_text),
+            (quit_button_rect, quit_text_rect),
+            (Test_ai_rect,Test_ai_text)]:
+
+            if button_rect.collidepoint(mouse_pos):
+                pygame.draw.rect(Screen, button_hover_color, button_rect)
+            else:
+                pygame.draw.rect(Screen, button_color, button_rect)
+
+        Screen.blit(Test_ai, Test_ai_text)
+        Screen.blit(compete_ai, compete_ai_text)
+        Screen.blit(Train_ai_sur, Train_ai_text)
+        Screen.blit(Play_alone_sur, Play_alone_text)
+        Screen.blit(quit_text, quit_text_rect)
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if compete_ai_rect.collidepoint(mouse_pos):
+                    print("Game start")
+
+                elif Train_ai_rect.collidepoint(mouse_pos):
+                    run(config_file)
+
+                elif Test_ai_rect.collidepoint(mouse_pos):
+                    run_winner(config_file)
+                    
+                elif Play_alone_rect.collidepoint(mouse_pos):
+                    User_play()
+                    
+                elif quit_button_rect.collidepoint(mouse_pos):
+                    pygame.quit()
+                    return
+
+
 
 
 # Main function for training and Testing
@@ -108,8 +189,6 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
             else:
                 if dino.rect.colliderect(obs.rect):
                     print(f"Game Over! Score: {scores}")
-                    print(game_speed)
-                    print(scores)
                     running = False
 
         # Calculating Fitness and testing 
@@ -162,9 +241,6 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
         pygame.display.flip()
 
         if is_training and len(dinos) == 0:
-            print(game_speed) 
-            print(scores)
-
             break
 
 
@@ -232,7 +308,9 @@ def run(config_file):
 
 
 if __name__ == "__main__":
+    
     config_file = os.path.join(os.path.dirname(__file__), "config_file.txt")
-    run(config_file)
-    # User_play() 
+    main_menu(WIDTH,config_file,background_image_path,screen,player_img,ground_img)
+
+
     # run_winner(config_file)
