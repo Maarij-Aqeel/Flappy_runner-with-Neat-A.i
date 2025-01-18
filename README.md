@@ -44,6 +44,7 @@ To play the game and test the AI, follow these steps:
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/Flappy_runner-with-Neat-A.i.git
+   pip install -r requirements.txt
    cd Flappy_runner-with-Neat-A.i
    python Neat_dino.py
 
