@@ -33,8 +33,10 @@ obstacle_img = pygame.transform.scale(
     (30, 200),
 )
 ground_img=pygame.transform.scale(pygame.image.load(os.path.join(os.path.dirname(__file__),'assets/ground.png')),(1100,HEIGHT-500))
-background_image_path=pygame.transform.smoothscale((pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/bg.png")).convert()),(WIDTH,HEIGHT))
-
+background_image_path = pygame.transform.smoothscale(
+    pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/bg.png")).convert(), 
+    (WIDTH, HEIGHT)
+)
 
 # Function for Displaying generations, Dinos alive  etc 
 def draw(screen, generation, alive_count, highest_score):
@@ -50,7 +52,7 @@ def draw(screen, generation, alive_count, highest_score):
 
     # Render text for Highest scores
     highest_scores = font.render(f"Highest_Score: {highest_score}", True, (0, 0, 0))
-    screen.blit(highest_scores, (WIDTH - 250, 40))
+    screen.blit(highest_scores, (WIDTH - 220, 40))
 
 
 # Calculate distance between dino and top of pipe
@@ -63,7 +65,7 @@ def distance(pos_one, pos_two):
     return math.sqrt(dx + dy)
 
 # Main Menu of game
-def main_menu(Screen_Width,scongig_file, background_image, Screen,dino,ground):
+def main_menu(Screen_Width,config_file, background_image, Screen,player_img,ground):
 
 
     button_width = 200
@@ -74,7 +76,7 @@ def main_menu(Screen_Width,scongig_file, background_image, Screen,dino,ground):
 
     while True:
         Screen.blit(background_image, (0, 0))
-        Screen.blit(dino,((WIDTH/2)-20,HEIGHT/4))
+        Screen.blit(player_img,((WIDTH/2)-20,HEIGHT/4))
         Screen.blit(ground,(0,HEIGHT-100))
         
 
@@ -125,7 +127,7 @@ def main_menu(Screen_Width,scongig_file, background_image, Screen,dino,ground):
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if compete_ai_rect.collidepoint(mouse_pos):
-                    print("Game start")
+                    compete_with_ai(config_file)
 
                 elif Train_ai_rect.collidepoint(mouse_pos):
                     run(config_file)
@@ -135,7 +137,7 @@ def main_menu(Screen_Width,scongig_file, background_image, Screen,dino,ground):
                     
                 elif Play_alone_rect.collidepoint(mouse_pos):
                     User_play()
-                    
+
                 elif quit_button_rect.collidepoint(mouse_pos):
                     pygame.quit()
                     return
@@ -144,7 +146,7 @@ def main_menu(Screen_Width,scongig_file, background_image, Screen,dino,ground):
 
 
 # Main function for training and Testing
-def main(config=None, Dino_winner=None, is_training=True, User_play=False):
+def main(config=None, Dino_winner=None, is_training=True, User_play=False,compete=False):
     global game_speed, obstacles, scores, dinos, nets, gen, generation, highest_scr
 
     # Initialize the game environment
@@ -154,10 +156,15 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
     obs_dist = 600       
     clock = pygame.time.Clock()
 
-    if is_training:
-        dinos = [Player(player_img,40,HEIGHT-player_height,jump_spd,gravity,player_height) for _ in gen]
+    if compete:
+        dino_player=Player(player_img,player_x+100,player_y,jump_spd,gravity,player_height)
+        dino = Player(player_img,player_x,HEIGHT-player_height,jump_spd,gravity,player_height)
+        obs_dist=500    # Adjust it to make gap bigger between player and pipe
+
+    elif is_training:
+        dinos = [Player(player_img,player_x,HEIGHT-player_height,jump_spd,gravity,player_height) for _ in gen]
     else:
-        dino = Player(player_img,40,HEIGHT-player_height,jump_spd,gravity,player_height)
+        dino = Player(player_img,player_x,HEIGHT-player_height,jump_spd,gravity,player_height)
 
     running = True
 
@@ -172,7 +179,7 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
                 quit()
 
         # Update and draw obstacles
-      
+
         if len(obstacles) == 0:
             obstacles.append(obstacle(obstacle_img, obs_dist,HEIGHT,WIDTH))
         
@@ -186,6 +193,14 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
                     if dino.rect.colliderect(obs.rect):
                         gen[i].fitness -= 1
                         remove(i,dinos,gen,nets)
+
+            elif compete:
+                if dino_player.rect.colliderect(obs.rect):
+                    print("You died")
+                    running=False
+                elif dino.rect.colliderect(obs.rect):
+                    print(f"A.i Died")
+                    running = False
             else:
                 if dino.rect.colliderect(obs.rect):
                     print(f"Game Over! Score: {scores}")
@@ -193,7 +208,39 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
 
         # Calculating Fitness and testing 
 
-        if User_play and not is_training:
+        if compete: # Compete with ai mode
+
+            font = pygame.font.SysFont("comicsans", 38)
+            player_label = font.render("Player", True, (255, 0, 0))  # Red plauer
+            ai_label = font.render("AI", True, (0, 0, 255))  # blue Ai
+
+            # Draw labels near the dinos
+            screen.blit(player_label, (dino_player.rect.x - 10, dino_player.rect.y - 30))
+            screen.blit(ai_label, (dino.rect.x - 10, dino.rect.y - 20))
+
+            #Checking Input by player
+            user_input= pygame.key.get_pressed()
+            if user_input[pygame.K_SPACE]:
+                dino_player.jump(HEIGHT)
+            dino_player.update(HEIGHT)
+            dino_player.draw(screen)
+
+
+            if len(obstacles) == 0:
+                obstacles.append(obstacle(obstacle_img, obs_dist,HEIGHT,WIDTH))
+
+            #Activate A.i                
+            output = Dino_winner.activate(
+                (dino.rect.y, distance((dino.rect.x, dino.rect.y), obstacles[0].rect.midtop),game_speed)
+            )
+            if output[0] > 0.5 and dino.rect.y >= HEIGHT - player_height:
+                dino.jump(HEIGHT)
+
+            dino.update(HEIGHT)
+            dino.draw(screen)
+
+
+        elif User_play and not is_training:
             user_input= pygame.key.get_pressed()
             if user_input[pygame.K_SPACE]:
                 dino.jump(HEIGHT)
@@ -217,6 +264,7 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False):
 
                 dino.update(HEIGHT)
                 dino.draw(screen)
+
         else:
             if len(obstacles) == 0:
                 obstacles.append(obstacle(obstacle_img, obs_dist,HEIGHT,WIDTH))
@@ -261,7 +309,7 @@ def eval_genomes(genomes, config):
     main(config=config, is_training=True)
 
 # Function for testing the best Genome(dino)
-def run_winner(config_file):
+def run_winner(config_file,compete=False):
     config = neat.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -275,13 +323,17 @@ def run_winner(config_file):
 
     Dino_winner = neat.nn.FeedForwardNetwork.create(winner, config)
 
-    main(config=config, Dino_winner=Dino_winner, is_training=False)
+    main(config=config, Dino_winner=Dino_winner, is_training=False,compete=compete)
 
 
 # Function for Playing the game yourself
 def User_play():
     main(is_training=False,User_play=True)
 
+# Functiono to Compete_with Ai
+def compete_with_ai(config_file):
+    run_winner(config_file,True)
+    main_menu(WIDTH,config_file,background_image_path,screen,player_img,ground_img)
 
 # Function for running the Neat algorithm
 def run(config_file):
