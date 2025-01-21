@@ -9,7 +9,7 @@ class obstacle:
         self.sprite = sprite
         self.rect = self.sprite.get_rect()
         self.rect.x = WIDTH-random.randrange(0,obs_dist)
-        self.rect.y = HEIGHT-random.randrange(130,240,10) #240 for larger 200 for smaller
+        self.rect.y = HEIGHT-random.randrange(130,235,10) #235 for larger 200 for smaller
     def draw(self, screen):
         screen.blit(self.sprite, self.rect)
 
