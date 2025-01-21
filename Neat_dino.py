@@ -146,7 +146,7 @@ def main_menu(Screen_Width,config_file, background_image, Screen,player_img,grou
 
 
 # Main function for training and Testing
-def main(config=None, Dino_winner=None, is_training=True, User_play=False,compete=False):
+def main(Dino_winner=None, is_training=True, User_play=False,compete=False):
     global game_speed, obstacles, scores, dinos, nets, gen, generation, highest_scr
 
     # Initialize the game environment
@@ -191,7 +191,7 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False,compet
             if is_training:
                 for i, dino in enumerate(dinos):
                     if dino.rect.colliderect(obs.rect):
-                        gen[i].fitness -= 1
+                        gen[i].fitness -= 1 #For fine tuning increase it 
                         remove(i,dinos,gen,nets)
 
             elif compete:
@@ -231,7 +231,7 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False,compet
 
             #Activate A.i                
             output = Dino_winner.activate(
-                (dino.rect.y, distance((dino.rect.x, dino.rect.y), obstacles[0].rect.midtop),game_speed)
+                (dino.rect.y, distance((dino.rect.x, dino.rect.y), obstacles[0].rect.midtop),dino.rect.y-obs.rect.y)
             )
             if output[0] > 0.5 and dino.rect.y >= HEIGHT - player_height:
                 dino.jump(HEIGHT)
@@ -252,10 +252,10 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False,compet
                 gen[i].fitness += 0.5 + (game_speed / 10)  # Reward for surviving
 
                 if obs.rect.right < dino.rect.left:
-                    gen[i].fitness += 5  # Reward for clearing pipe
+                    gen[i].fitness += 5  # Reward for clearing pipe (For fine tuning u can increase it)
 
                 output = nets[i].activate(
-                    (dino.rect.y, distance((dino.rect.x, dino.rect.y), obs.rect.midtop),game_speed)
+                    (dino.rect.y, distance((dino.rect.x, dino.rect.y), obs.rect.midtop),dino.rect.y-obs.rect.y)
                 )
 
 
@@ -271,7 +271,7 @@ def main(config=None, Dino_winner=None, is_training=True, User_play=False,compet
 
                 
             output = Dino_winner.activate(
-                (dino.rect.y, distance((dino.rect.x, dino.rect.y), obstacles[0].rect.midtop),game_speed)
+                (dino.rect.y, distance((dino.rect.x, dino.rect.y), obstacles[0].rect.midtop),dino.rect.y-obs.rect.y)
             )
             if output[0] > 0.5 and dino.rect.y >= HEIGHT - player_height:
                 dino.jump(HEIGHT)
@@ -297,16 +297,16 @@ def eval_genomes(genomes, config):
     global gen, nets, generation
 
     generation += 1
-    gen = []
-    nets = []
+    gen = []  # List to hold genomes
+    nets = []  # List to hold neural networks
 
     for _, genome in genomes:
         gen.append(genome)
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         nets.append(net)
-        genome.fitness = 0
+        genome.fitness = 0  # Initialize fitness to zero
 
-    main(config=config, is_training=True)
+    main(is_training=True)
 
 # Function for testing the best Genome(dino)
 def run_winner(config_file,compete=False):
@@ -323,7 +323,7 @@ def run_winner(config_file,compete=False):
 
     Dino_winner = neat.nn.FeedForwardNetwork.create(winner, config)
 
-    main(config=config, Dino_winner=Dino_winner, is_training=False,compete=compete)
+    main(Dino_winner=Dino_winner, is_training=False,compete=compete)
 
 
 # Function for Playing the game yourself
