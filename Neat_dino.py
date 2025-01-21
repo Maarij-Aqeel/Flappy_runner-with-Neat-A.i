@@ -33,9 +33,13 @@ obstacle_img = pygame.transform.scale(
     (30, 200),
 )
 ground_img=pygame.transform.scale(pygame.image.load(os.path.join(os.path.dirname(__file__),'assets/ground.png')),(1100,HEIGHT-500))
-background_image_path = pygame.transform.smoothscale(
+background_img = pygame.transform.smoothscale(
     pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/bg.png")).convert(), 
     (WIDTH, HEIGHT)
+)
+
+game_over_img = pygame.transform.scale(
+    pygame.image.load(os.path.join(os.path.dirname(__file__), "assets/Game_over.png")), (WIDTH-800, HEIGHT-400)
 )
 
 # Function for Displaying generations, Dinos alive  etc 
@@ -142,8 +146,61 @@ def main_menu(Screen_Width,config_file, background_image, Screen,player_img,grou
                     pygame.quit()
                     return
 
+# Game over screen
+def Game_Over(Screen,Game_over_img,bg,ground,Screen_Width,highest_score):
+
+    #Button parameterrs
+    button_width = 200
+    button_height = 50
+    button_color = (255, 22, 15) 
+    button_hover_color = (254, 147, 36)
+    small_font = pygame.font.Font(None, 24)
+    large_font=pygame.font.Font(None,40)
+
+    while True:
+        Screen.blit(bg, (0, 0))
+        Screen.blit(Game_over_img,((WIDTH/2)-150,HEIGHT/4))
+        Screen.blit(ground,(0,HEIGHT-100))
+
+        #Score Label
+        highest_score_text=large_font.render(highest_score,True,(0, 0, 0))
+
+        #Restart and Main menu button
+        restart_rect = pygame.Rect((Screen_Width/2)-100, 400, button_width, button_height)
+        restart = small_font.render("Restart", True, (255, 255, 255))
+        restart_text = restart.get_rect(center=restart_rect.center)
+
+        main_menu_rect = pygame.Rect((Screen_Width/2)-100, 470, button_width, button_height)
+        main_menu_ = small_font.render("Main Menu", True, (255, 255, 255))
+        main_menu_text = main_menu_.get_rect(center=main_menu_rect.center)
 
 
+        mouse_pos=pygame.mouse.get_pos()
+
+        for button,button_text in   [(restart_rect,restart_text),(main_menu_rect,main_menu_text)]:
+            if button.collidepoint(mouse_pos):
+                pygame.draw.rect(Screen, button_hover_color, button)
+            else:
+                pygame.draw.rect(Screen, button_color, button)
+
+
+        screen.blit(highest_score_text,((WIDTH/2)-80,300))
+        Screen.blit(restart,restart_text)
+        Screen.blit(main_menu_,main_menu_text)
+        pygame.display.flip()
+
+        # Mouse click action
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if restart_rect.collidepoint(mouse_pos):
+                    return True
+                
+                elif main_menu_rect.collidepoint(mouse_pos):
+                    return False
 
 # Main function for training and Testing
 def main(Dino_winner=None, is_training=True, User_play=False,compete=False):
@@ -195,16 +252,18 @@ def main(Dino_winner=None, is_training=True, User_play=False,compete=False):
                         remove(i,dinos,gen,nets)
 
             elif compete:
-                if dino_player.rect.colliderect(obs.rect):
-                    print("You died")
-                    running=False
-                elif dino.rect.colliderect(obs.rect):
-                    print(f"A.i Died")
-                    running = False
-            else:
-                if dino.rect.colliderect(obs.rect):
-                    print(f"Game Over! Score: {scores}")
-                    running = False
+                if dino_player.rect.colliderect(obs.rect) or dino.rect.colliderect(obs.rect):
+                    if  Game_Over(screen,game_over_img,background_img,ground_img,WIDTH,'Scores:'+str(scores)):
+                        main(Dino_winner=Dino_winner, is_training=False,compete=compete)
+                    else:
+                        running=False
+                        main_menu(WIDTH,config_file,background_img,screen,player_img,ground_img)
+            elif dino.rect.colliderect(obs.rect):
+                    if  Game_Over(screen,game_over_img,background_img,ground_img,WIDTH,'Scores:'+str(scores)):
+                        main(Dino_winner=Dino_winner, is_training=False,User_play=User_play)
+                    else:
+                        running=False
+                        main_menu(WIDTH,config_file,background_img,screen,player_img,ground_img)
 
         # Calculating Fitness and testing 
 
@@ -333,7 +392,6 @@ def User_play():
 # Functiono to Compete_with Ai
 def compete_with_ai(config_file):
     run_winner(config_file,True)
-    main_menu(WIDTH,config_file,background_image_path,screen,player_img,ground_img)
 
 # Function for running the Neat algorithm
 def run(config_file):
@@ -359,8 +417,8 @@ def run(config_file):
     print(f"Best Genome: {winner}")
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     
     config_file = os.path.join(os.path.dirname(__file__), "config_file.txt")
-    main_menu(WIDTH,config_file,background_image_path,screen,player_img,ground_img)
+    main_menu(WIDTH,config_file,background_img,screen,player_img,ground_img)
 
